@@ -1,0 +1,123 @@
+diff -u -r annlib_orig/include/ANN/ANNperf.h annlib/include/ANN/ANNperf.h
+--- annlib_orig/include/ANN/ANNperf.h	2005-05-03 14:03:08.000000000 -0700
++++ annlib/include/ANN/ANNperf.h	2006-02-14 21:19:48.000000000 -0800
+@@ -113,7 +113,7 @@
+ 	double mean() { return sum/n; } // mean
+ 
+ 									// standard deviation
+-	double stdDev() { return sqrt((sum2 - (sum*sum)/n)/(n-1));}
++	double stdDev() { return std::sqrt((sum2 - (sum*sum)/n)/(n-1));}
+ 
+ 	double min() { return minVal; } // minimum
+ 	double max() { return maxVal; } // maximum
+diff -u -r annlib_orig/src/ANN.cpp annlib/src/ANN.cpp
+--- annlib_orig/src/ANN.cpp	2005-05-03 14:03:08.000000000 -0700
++++ annlib/src/ANN.cpp	2006-02-14 21:01:29.000000000 -0800
+@@ -167,7 +167,7 @@
+ {
+ 	if (level == ANNabort) {
+ 		cerr << "ANN: ERROR------->" << msg << "<-------------ERROR\n";
+-		exit(1);
++		throw;
+ 	}
+ 	else {
+ 		cerr << "ANN: WARNING----->" << msg << "<-------------WARNING\n";
+diff -u -r annlib_orig/src/kd_dump.cpp annlib/src/kd_dump.cpp
+--- annlib_orig/src/kd_dump.cpp	2005-05-03 14:03:08.000000000 -0700
++++ annlib/src/kd_dump.cpp	2006-02-14 22:21:16.000000000 -0800
+@@ -33,7 +33,7 @@
+ 
+ #include "kd_tree.h"					// kd-tree declarations
+ #include "bd_tree.h"					// bd-tree declarations
+-
++#include <cstring>
+ using namespace std;					// make std:: available
+ 
+ //----------------------------------------------------------------------
+@@ -439,6 +439,7 @@
+ 	}
+ 	else {
+ 		annError("Illegal node type in dump file", ANNabort);
+-		exit(0);								// to keep the compiler happy
++		throw;								// to keep the compiler happy
+ 	}
++        return NULL;
+ }
+diff -u -r annlib_orig/src/perf.cpp annlib/src/perf.cpp
+--- annlib_orig/src/perf.cpp	2005-05-03 14:03:08.000000000 -0700
++++ annlib/src/perf.cpp	2011-11-26 06:46:17.000000000 -0800
+@@ -66,7 +66,7 @@
+ //	Routines for statistics.
+ //----------------------------------------------------------------------
+ 
+-DLL_API void annResetStats(int data_size) // reset stats for a set of queries
++/*DLL_API*/ void annResetStats(int data_size) // reset stats for a set of queries
+ {
+ 	ann_Ndata_pts  = data_size;
+ 	ann_visit_lfs.reset();
+@@ -80,7 +80,7 @@
+ 	ann_rank_err.reset();
+ }
+ 
+-DLL_API void annResetCounts()				// reset counts for one query
++/*DLL_API*/ void annResetCounts()				// reset counts for one query
+ {
+ 	ann_Nvisit_lfs = 0;
+ 	ann_Nvisit_spl = 0;
+@@ -90,7 +90,7 @@
+ 	ann_Nfloat_ops = 0;
+ }
+ 
+-DLL_API void annUpdateStats()				// update stats with current counts
++/*DLL_API*/ void annUpdateStats()				// update stats with current counts
+ {
+ 	ann_visit_lfs += ann_Nvisit_lfs;
+ 	ann_visit_nds += ann_Nvisit_spl + ann_Nvisit_lfs;
+@@ -111,7 +111,7 @@
+ 	cout.width(9); cout << s.max()/div			<< " >\n";
+ }
+ 
+-DLL_API void annPrintStats(				// print statistics for a run
++/*DLL_API*/ void annPrintStats(				// print statistics for a run
+ 	ANNbool validate)					// true if average errors desired
+ {
+ 	cout.precision(4);					// set floating precision
+
+diff -u -r annlib_orig/include/ANN/ANNx.h annlib/include/ANN/ANNx.h
+--- annlib_orig/include/ANN/ANNx.h     2005-05-03 14:03:08.000000000 -0700
++++ annlib/include/ANN/ANNx.h   2012-11-26 15:39:46.228159000 -0800
+@@ -64,7 +64,7 @@
+ //----------------------------------------------------------------------
+ 
+ void annError(                                 // ANN error routine
+-       char                    *msg,           // error message
++       const char              *msg,           // error message
+        ANNerr                  level);         // level of error
+ 
+ void annPrintPt(                               // print a point
+
+diff -u -r annlib_orig/src/ANN.cpp annlib/src/ANN.cpp
+--- annlib_orig/src/ANN.cpp    2006-02-14 21:01:29.000000000 -0800
++++ annlib/src/ANN.cpp  2012-11-26 15:43:46.022637000 -0800
+@@ -163,7 +163,7 @@
+ //     Error handler
+ //----------------------------------------------------------------------
+ 
+-void annError(char *msg, ANNerr level)
++void annError(const char *msg, ANNerr level)
+ {
+        if (level == ANNabort) {
+                cerr << "ANN: ERROR------->" << msg << "<-------------ERROR\n";
+
+diff -u -r annlib_orig/src/perf.cpp annlib/src/perf.cpp
+--- annlib_orig/src/perf.cpp       2011-11-26 06:46:17.000000000 -0800
++++ annlib/src/perf.cpp        2012-11-27 19:50:19.000000000 -0800
+@@ -102,7 +102,7 @@
+ }
+ 
+                                                                                // print a single statistic
+-void print_one_stat(char *title, ANNsampStat s, double div)
++void print_one_stat(const char *title, ANNsampStat s, double div)
+ {
+        cout << title << "= [ ";
+        cout.width(9); cout << s.mean()/div                     << " : ";
